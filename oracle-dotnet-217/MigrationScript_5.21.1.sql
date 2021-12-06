@@ -1,0 +1,70 @@
+﻿DECLARE
+V_COUNT INTEGER;
+BEGIN
+SELECT COUNT(TABLE_NAME) INTO V_COUNT from ALL_TABLES where TABLE_NAME = '__MigrationHistory' AND OWNER = 'TESTSCHEMA';
+IF V_COUNT = 0 THEN
+Begin
+DECLARE
+    USEREXIST INTEGER;
+    USER_NOT_EXIST EXCEPTION;
+    PRAGMA EXCEPTION_INIT( USER_NOT_EXIST, -01435 );
+BEGIN
+SELECT COUNT(*) INTO USEREXIST FROM ALL_USERS WHERE USERNAME='TESTSCHEMA';
+IF (USEREXIST = 0) THEN
+    RAISE USER_NOT_EXIST;
+END IF;
+END;
+BEGIN 
+
+execute immediate 'CREATE TABLE "TESTSCHEMA"."__MigrationHistory" (
+    "MigrationId" NVARCHAR2(150) NOT NULL,
+    "ProductVersion" NVARCHAR2(32) NOT NULL,
+    CONSTRAINT "PK___MigrationHistory" PRIMARY KEY ("MigrationId")
+)';
+END;
+
+End;
+
+END IF;
+EXCEPTION
+WHEN OTHERS THEN
+    IF(SQLCODE != -942)THEN
+        RAISE;
+    END IF;
+END;
+/
+
+DECLARE
+    USEREXIST INTEGER;
+    USER_NOT_EXIST EXCEPTION;
+    PRAGMA EXCEPTION_INIT( USER_NOT_EXIST, -01435 );
+BEGIN
+SELECT COUNT(*) INTO USEREXIST FROM ALL_USERS WHERE USERNAME='TESTSCHEMA';
+IF (USEREXIST = 0) THEN
+    RAISE USER_NOT_EXIST;
+END IF;
+END;
+/
+
+BEGIN 
+
+execute immediate 'CREATE SEQUENCE "TESTSCHEMA"."SQ_TEST" start with 1';
+
+execute immediate 'CREATE TABLE "TESTSCHEMA"."TEST" (
+    "Id" NUMBER(19) NOT NULL,
+    CONSTRAINT "PK_TEST" PRIMARY KEY ("Id")
+)';
+execute immediate 'create or replace trigger "TESTSCHEMA"."TR_TEST"
+before insert on "TESTSCHEMA"."TEST" for each row 
+begin 
+  if :new."Id" is NULL then 
+    select "TESTSCHEMA"."SQ_TEST".nextval into :new."Id" from dual;  
+  end if; 
+end;';
+END;
+/
+
+INSERT INTO "TESTSCHEMA"."__MigrationHistory" ("MigrationId", "ProductVersion")
+VALUES (N'20211206101000_Initial', N'5.0.12')
+/
+
